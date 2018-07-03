@@ -1,0 +1,109 @@
+{
+  "name": "Classif-Deep-Features-Predict",
+  "container-image": {
+    "image": "rmormont/s_classif-deep-features-predict",
+    "type": "singularity"
+  },
+  "schema-version": "cytomine-0.1",
+  "description": "Cytomine software for image classification with deep features (predict)",
+  "command-line": "python run.py CYTOMINE_HOST CYTOMINE_PUBLIC_KEY CYTOMINE_PRIVATE_KEY CYTOMINE_ID_PROJECT CYTOMINE_ID_SOFTWARE CYTOMINE_USERS_IDS CYTOMINE_IMAGE_IDS CYTOMINE_MODEL_JOB_ID WORKING_DIRECTORY N_JOBS",
+  "inputs": [
+    {
+      "id": "cytomine_host",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine host",
+      "description": "Cytomine server hostname",
+      "type": "String",
+      "optional": false,
+      "set-by-server": true
+    },
+    {
+      "id": "cytomine_public_key",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine public key",
+      "description": "Cytomine public key",
+      "type": "String",
+      "optional": false,
+      "set-by-server": true
+    },
+    {
+      "id": "cytomine_private_key",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine private key",
+      "description": "Cytomine private key",
+      "type": "String",
+      "optional": false,
+      "set-by-server": true
+    },
+    {
+      "id": "cytomine_id_project",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine project id",
+      "description": "Cytomine project id",
+      "type": "String",
+      "optional": false,
+      "set-by-server": true
+    },
+    {
+      "id": "cytomine_id_software",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine software id",
+      "description": "Cytomine software id",
+      "type": "String",
+      "optional": false,
+      "set-by-server": true
+    },
+    {
+      "id": "cytomine_images_ids",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine images ids",
+      "description": "(Annotations filtering) Identifiers of images whose the annotations should be selected for training.",
+      "type": "List",
+      "default-value": null
+    },
+    {
+      "id": "cytomine_model_job_id",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine model job id",
+      "description": "Identifier of the job to which was attached the model builder pickle file.",
+      "type": "Number",
+      "optional": false
+    },
+    {
+      "id": "cytomine_users_ids",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Cytomine users ids",
+      "description": "(Annotations filtering) Identifiers of users whose the annotations should be selected for training.",
+      "type": "List",
+      "default-value": null
+    },
+    {
+      "id": "working_directory",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Working directory",
+      "description": "Working directory for the server",
+      "type": "String",
+      "default-value": null,
+      "optional": false
+    },
+    {
+      "id": "n_jobs",
+      "value-key": "@ID",
+      "command-line-flag": "--@id",
+      "name": "Number of jobs",
+      "description": "Number of jobs for training",
+      "type": "Number",
+      "default-value": 1,
+      "optional": false
+    }
+  ]
+}
