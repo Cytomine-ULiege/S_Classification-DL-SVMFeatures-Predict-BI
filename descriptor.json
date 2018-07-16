@@ -86,16 +86,6 @@
       "default-value": null
     },
     {
-      "id": "working_directory",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
-      "name": "Working directory",
-      "description": "Working directory for the server",
-      "type": "String",
-      "default-value": null,
-      "optional": false
-    },
-    {
       "id": "n_jobs",
       "value-key": "@ID",
       "command-line-flag": "--@id",
