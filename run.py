@@ -1,8 +1,11 @@
 import os
+from pathlib import Path
+
 from cytomine import CytomineJob
 import numpy as np
 import pickle
-from cytomine.models import Annotation, AlgoAnnotationTerm, AttachedFile, Job
+from cytomine.models import Annotation, AlgoAnnotationTerm, AttachedFile, Job, AttachedFileCollection, \
+    AnnotationCollection
 
 from keras_util import MODEL_RESNET50, MODEL_VGG19, MODEL_VGG16, MODEL_INCEPTION_V3, MODEL_INCEPTION_RESNET_V2, \
     MODEL_MOBILE, MODEL_DENSE_NET_201, MODEL_NASNET_LARGE, MODEL_NASNET_MOBILE, PretrainedModelFeatures, ImageLoader, \
@@ -13,14 +16,23 @@ from cytomine_util import parse_list_or_none, get_annotations
 def main(argv):
     with CytomineJob.from_cli(argv) as cj:
         # prepare paths
-        working_path = cj.parameters.working_directory
+        working_path = str(Path.home())
         data_path = os.path.join(working_path, "pred_data")
         if not os.path.exists(data_path):
             os.makedirs(data_path)
-        model_path = os.path.join(working_path, "model.pkl")
 
+        model_filename = "model.pkl"
+
+        cj.job.update(progress=5, statusComment="Download model ...")
         model_job = Job().fetch(cj.parameters.cytomine_model_job_id)
-        AttachedFile(model_job).fetch().download(destination=model_path, override=True)
+        attached_files = AttachedFileCollection(model_job).fetch_with_filter("project", cj.project.id)
+        if not (0 < len(attached_files) < 2):
+            raise ValueError("More or less than 1 file attached to the Job (found {} file(s)).".format(len(attached_files)))
+        attached_file = attached_files[0]
+        if attached_file.filename != model_filename:
+            raise ValueError("Expected model file name is '{}' (found: '{}').".format(model_filename, attached_file.filename))
+        model_path = os.path.join(working_path, model_filename)
+        attached_file.download(model_path)
 
         # load model
         with open(model_path, "rb") as file:
@@ -31,7 +43,7 @@ def main(argv):
             reduction = data["reduction"]
 
         # load and dump annotations
-        cj.job.update(statusComment="Download annotations.")
+        cj.job.update(progress=10, statusComment="Download annotations.")
         annotations = get_annotations(
             project_id=cj.parameters.cytomine_project_id,
             images=parse_list_or_none(cj.parameters.cytomine_images_ids),
@@ -39,10 +51,10 @@ def main(argv):
             showWKT=True
         )
 
-        cj.job.update(statusComment="Fetch crops.", progress=10)
+        cj.job.update(statusComment="Fetch crops.", progress=15)
         n_samples = len(annotations)
         x = np.zeros([n_samples], dtype=np.object)
-        for i, annotation in cj.monitor(enumerate(annotations), start=10, end=40, prefix="Fetch crops", period=0.1):
+        for i, annotation in cj.monitor(enumerate(annotations), start=15, end=40, prefix="Fetch crops", period=0.1):
             file_format = os.path.join(data_path, "{id}.png")
             if not annotation.dump(dest_pattern=file_format):
                 raise ValueError("Download error for annotation '{}'.".format(annotation.id))
@@ -85,9 +97,13 @@ def main(argv):
             y_pred = model.predict(x_feat)
 
         cj.job.update(statusComment="Upload annotations.", progress=80)
+        annotation_collection = AnnotationCollection()
         for i, annotation in cj.monitor(enumerate(annotations), start=80, end=100, period=0.1, prefix="Upload annotations"):
-            new_annotation = Annotation(location=annotation.location, id_image=annotation.image, id_project=annotation.project).save()
-            AlgoAnnotationTerm(new_annotation.id, id_term=int(y_pred[i]), rate=float(probas[i]) if probas is not None else 1.0).save()
+            annotation_collection.append(Annotation(
+                location=annotation.location, id_image=annotation.image, id_project=annotation.project,
+                term=[int(y_pred[i])], rate=float(probas[i]) if probas is not None else 1.0
+            ).save())
+        annotation_collection.save()
 
         cj.job.update(statusComment="Finished.", progress=100)
 
